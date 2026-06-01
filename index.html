@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>Smart Load Monitor</title>
+
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+
+<style>
+
+body{
+    margin:0;
+    padding:0;
+    background:#0f172a;
+    font-family:Arial;
+    color:white;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    min-height:100vh;
+}
+
+.container{
+
+    width:360px;
+
+    background:#1e293b;
+
+    border-radius:25px;
+
+    padding:25px;
+
+    box-shadow:0 0 30px rgba(0,0,0,0.5);
+}
+
+h1{
+
+    text-align:center;
+
+    margin-bottom:25px;
+
+    font-size:30px;
+}
+
+.card{
+
+    background:#334155;
+
+    border-radius:20px;
+
+    padding:18px;
+
+    margin-bottom:15px;
+}
+
+.label{
+
+    font-size:18px;
+
+    opacity:0.8;
+}
+
+.value{
+
+    font-size:30px;
+
+    font-weight:bold;
+
+    margin-top:8px;
+}
+
+.status{
+
+    margin-top:20px;
+
+    text-align:center;
+
+    font-size:18px;
+}
+
+.online{
+
+    color:#22c55e;
+}
+
+.offline{
+
+    color:#ef4444;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>Smart Load Monitor</h1>
+
+<div class="card">
+
+<div class="label">
+Voltage
+</div>
+
+<div class="value" id="voltage">
+0 V
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="label">
+Current
+</div>
+
+<div class="value" id="current">
+0 A
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="label">
+Power
+</div>
+
+<div class="value" id="power">
+0 W
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="label">
+Energy
+</div>
+
+<div class="value" id="energy">
+0 kWh
+</div>
+
+</div>
+
+<div class="card">
+
+<div class="label">
+
+</div>
+
+<div class="value" id="relay">
+OFF
+</div>
+
+</div>
+
+<div class="status offline" id="status">
+Disconnected
+</div>
+
+</div>
+
+<script>
+
+// =====================================================
+// MQTT CONNECT
+// =====================================================
+
+const client = mqtt.connect(
+'wss://gf000f09.ala.us-east-1.emqxsl.com:8084/mqtt',
+{
+    username:'msechead@gmail.com',
+    password:'msec@123'
+}
+);
+
+// =====================================================
+// CONNECT
+// =====================================================
+
+client.on('connect', ()=>{
+
+    console.log("MQTT Connected");
+
+    document.getElementById("status")
+    .innerHTML = "Connected";
+
+    document.getElementById("status")
+    .className = "status online";
+
+    client.subscribe("msec/load/data");
+
+    client.subscribe("msec/load/status");
+});
+
+// =====================================================
+// MESSAGE
+// =====================================================
+
+client.on('message', (topic, message)=>{
+
+    const msg = message.toString();
+
+    console.log(topic);
+    console.log(msg);
+
+    // =================================================
+    // SENSOR DATA
+    // =================================================
+
+    if(topic === "msec/load/data"){
+
+        const data = JSON.parse(msg);
+
+        document.getElementById("voltage")
+        .innerHTML =
+        data.voltage + " V";
+
+        document.getElementById("current")
+        .innerHTML =
+        data.current + " A";
+
+        document.getElementById("power")
+        .innerHTML =
+        data.power + " W";
+
+        document.getElementById("energy")
+        .innerHTML =
+        data.energy + " kWh";
+    }
+
+    // =================================================
+    // RELAY STATUS
+    // =================================================
+
+    if(topic === "msec/load/status"){
+
+        document.getElementById("relay")
+        .innerHTML = msg;
+    }
+});
+
+// =====================================================
+// DISCONNECT
+// =====================================================
+
+client.on('close', ()=>{
+
+    document.getElementById("status")
+    .innerHTML = "Disconnected";
+
+    document.getElementById("status")
+    .className = "status offline";
+});
+
+</script>
+
+</body>
+</html>
+
